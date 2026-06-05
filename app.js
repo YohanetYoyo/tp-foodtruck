@@ -116,7 +116,6 @@ function recapitulatif() {
 
             const toast = document.getElementById('notification');
             const toastBody = document.querySelector('.toast-body');
-            console.log(toastBody);
             toastBody.textContent = res;
 
             new bootstrap.Toast(toast).show()
@@ -133,7 +132,6 @@ function recapitulatif() {
 
             const toast = document.getElementById('notification');
             const toastBody = document.querySelector('.toast-body');
-            console.log(toastBody);
             toastBody.textContent = err;
 
             new bootstrap.Toast(toast).show()
@@ -166,6 +164,7 @@ function afficherCommandes() {
         <tr>
         <td colspan="3"><b>Commande n°${order.id}</b></td>
         <td><p id='status${order.id}'>${order.status}</p></td>
+        <td><button type="button" class='annuler${order.id}' onclick="annulerCommande(${order.id})">Annuler</button></td>
         </tr>
         `
 
@@ -196,6 +195,7 @@ async function statutCommande(id) {
                 order.status = 'En livraison...';
                 status.textContent = 'En livraison...';
                 resolve('En livraison...')
+                document.querySelector(`.annuler${id}`).style.display = 'none';
             }, 3000)
         });
         return await new Promise((resolve, reject) => {
@@ -206,12 +206,20 @@ async function statutCommande(id) {
             }, 3000)
         })
     } else if ('En livraison...') {
+        document.querySelector(`.annuler${id}`).style.display = 'none';
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 resolve('Livré !')
             }, 3000)
         })
     }
+}
+
+function annulerCommande(id) {
+    const index = orders.findIndex(order => order.id === Number(id));
+    orders.splice(index, 1);
+
+    afficherCommandes();
 }
 
 window.onload = async function() {
