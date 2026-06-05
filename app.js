@@ -4,9 +4,11 @@ class ErreurCustom extends Error {
     }
 }
 
-const tableMenu = document.getElementById('menu-table');
 let menu = [];
 let panier = [];
+let orders = [];
+
+const tableMenu = document.getElementById('menu-table');
 
 async function getMenu() {
     const response = await fetch('https://keligmartin.github.io/api/menu.json');
@@ -107,7 +109,108 @@ function recapitulatif() {
     const modal = confirm(message);
 
     if (modal) {
+        fakePostCommande().then(res => {
+            orders.push({id: (orders.length + 1), panier: panier, status:'Préparation...'});
 
+            document.getElementById('btn-order').textContent = 'Commander';
+
+            const toast = document.getElementById('notification');
+            const toastBody = document.querySelector('.toast-body');
+            console.log(toastBody);
+            toastBody.textContent = res;
+
+            new bootstrap.Toast(toast).show()
+
+            panier = [];
+            localStorage.setItem('panier', JSON.stringify(panier));
+
+            afficherPanier();
+            setTotal();
+
+            afficherCommandes();
+        }).catch(err => {
+            document.getElementById('btn-order').textContent = 'Commander';
+
+            const toast = document.getElementById('notification');
+            const toastBody = document.querySelector('.toast-body');
+            console.log(toastBody);
+            toastBody.textContent = err;
+
+            new bootstrap.Toast(toast).show()
+        })
+    }
+}
+
+async function fakePostCommande() {
+    const btnOrder = document.getElementById('btn-order');
+    btnOrder.textContent = 'Envoi en cours...';
+    btnOrder.disabled = true;
+    return new Promise((resolve, reject) => {
+        if (orders.length >= 5) {
+            reject('Il ne peut y avoir plus de 5 commandes en cours !')
+        }
+        setTimeout(() => {
+            resolve('Commande envoyée avec succès !')
+        }, 3000)
+    })
+}
+
+function afficherCommandes() {
+    const table = document.getElementById('order-table');
+
+    table.innerHTML = '';
+
+    orders.forEach(order => {
+        const thead = document.createElement('tr');
+        thead.innerHTML = `
+        <tr>
+        <td colspan="3"><b>Commande n°${order.id}</b></td>
+        <td><p id='status${order.id}'>${order.status}</p></td>
+        </tr>
+        `
+
+        table.appendChild(thead);
+
+        order.panier.forEach(food => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+            <tr>
+                <td>${food.name}</td>
+                <td>${food.quantite}</td>
+                <td>${food.price * food.quantite}</td>
+            </tr>
+        `;
+            table.appendChild(tr);
+        })
+        statutCommande(order.id).then(r => console.log(r));
+    })
+}
+
+async function statutCommande(id) {
+    const order = orders.find(order => order.id === Number(id));
+    const status = document.getElementById(`status${id}`);
+
+    if (order.status === 'Préparation...') {
+        await new Promise((resolve, reject) => {
+            setTimeout(() => {
+                order.status = 'En livraison...';
+                status.textContent = 'En livraison...';
+                resolve('En livraison...')
+            }, 3000)
+        });
+        return await new Promise((resolve, reject) => {
+            setTimeout(() => {
+                order.status = 'Livré !';
+                status.textContent = 'Livré !';
+                resolve('Livré !')
+            }, 3000)
+        })
+    } else if ('En livraison...') {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve('Livré !')
+            }, 3000)
+        })
     }
 }
 
