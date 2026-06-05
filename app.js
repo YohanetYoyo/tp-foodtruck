@@ -11,7 +11,6 @@ let panier = [];
 async function getMenu() {
     const response = await fetch('https://keligmartin.github.io/api/menu.json');
     menu = await response.json();
-    console.log(menu)
 
     tableMenu.innerHTML = ``;
 
@@ -36,9 +35,11 @@ function afficherPanier() {
     if (panier.length > 0) {
         document.getElementById('panier-table').style.display = 'inline-block';
         document.querySelector('.text-muted').style.display = 'none';
+        document.getElementById('btn-order').disabled = false;
     } else {
         document.getElementById('panier-table').style.display = 'none';
         document.querySelector('.text-muted').style.display = 'inline';
+        document.getElementById('btn-order').disabled = true;
     }
 
     panier.forEach(food => {
@@ -94,10 +95,32 @@ function setTotal() {
     document.getElementById('cart-total').textContent = total + ' €';
 }
 
+function recapitulatif() {
+    let message = "";
+    let total = 0;
+    panier.forEach(food => {
+        total += food.price * food.quantite;
+        message += `${food.quantite} ${food.name} (${food.price} € l'unité) : ${food.price * food.quantite} € au total\n`;
+    })
+    message += `\nTotal panier : ${total} €\nTVA : 10%\nTTC : ${total + (total * 0.10)} €\n\nCliquez sur 'OK' pour confirmer votre commande`;
+
+    const modal = confirm(message);
+
+    if (modal) {
+
+    }
+}
+
 window.onload = async function() {
     try {
         await getMenu();
     } catch(err) {
         throw new ErreurCustom("Impossible d'obtenir le menu", { cause: err });
     }
+
+    document.getElementById('btn-order').addEventListener('click', async e => {
+        if (panier.length === 0) return;
+
+        recapitulatif();
+    })
 }
